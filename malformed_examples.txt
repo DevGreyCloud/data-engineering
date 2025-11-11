@@ -19,7 +19,6 @@ id,name,age
   <user id="1">
     <name>Alice</name>
     <email>alice@example.com</email>
-  <!-- missing closing tag for user id 1 -->
   <user id=2>
     <name>Bob</name>
     <email>bob@example.com</email>

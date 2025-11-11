@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Simple Todo App with CSV & TXT Export (with Created Date)</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 600px; margin: 20px auto; }
+  h1 { text-align: center; }
+  form { margin-bottom: 10px; display:flex; gap:8px; }
+  input[type="text"] { flex:1; padding: 8px; font-size: 16px; }
+  button { padding: 8px 12px; font-size: 16px; }
+  ul { list-style: none; padding: 0; }
+  li { background: #f8f8f8; margin: 5px 0; padding: 8px; border-radius: 3px; display: flex; align-items: center; gap:8px; }
+  .left { flex: 1; display:flex; flex-direction: column; }
+  .todo-text { font-size: 16px; word-break: break-word; }
+  .todo-date { font-size: 12px; color: #666; margin-top: 4px; }
+  .right { display: flex; align-items: center; gap:8px; }
+  .delete-btn { cursor: pointer; color: red; font-weight: bold; padding: 0 6px; }
+</style>
+</head>
+<body>
+
+<h1>Todo List</h1>
+<form id="todoForm">
+  <input type="text" id="todoInput" placeholder="Enter todo item" required />
+  <button type="submit">Add</button>
+</form>
+
+<ul id="todoList"></ul>
+<div style="display:flex; gap:8px; margin-top:8px;">
+  <button id="exportBtn">Export to CSV</button>
+  <button id="exportTxtBtn">Export to TXT</button>
+</div>
+
+<script>
+  const todoForm = document.getElementById('todoForm');
+  const todoInput = document.getElementById('todoInput');
+  const todoList = document.getElementById('todoList');
+  const exportBtn = document.getElementById('exportBtn');
+  const exportTxtBtn = document.getElementById('exportTxtBtn');
+
+  let todos = []; // items: { text: string, createdAt: string }
+
+  function renderTodos() {
+    todoList.innerHTML = '';
+    todos.forEach((todo, index) => {
+      const li = document.createElement('li');
+
+      const left = document.createElement('div');
+      left.className = 'left';
+      const textSpan = document.createElement('div');
+      textSpan.className = 'todo-text';
+      textSpan.textContent = todo.text;
+      const dateSpan = document.createElement('div');
+      dateSpan.className = 'todo-date';
+      dateSpan.textContent = todo.createdAt;
+      left.appendChild(textSpan);
+      left.appendChild(dateSpan);
+
+      const right = document.createElement('div');
+      right.className = 'right';
+      const delBtn = document.createElement('span');
+      delBtn.textContent = '×';
+      delBtn.className = 'delete-btn';
+      delBtn.title = 'Delete';
+      delBtn.onclick = () => {
+        todos.splice(index, 1);
+        renderTodos();
+      };
+
+      right.appendChild(delBtn);
+
+      li.appendChild(left);
+      li.appendChild(right);
+      todoList.appendChild(li);
+    });
+  }
+
+  todoForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = todoInput.value.trim();
+    if (!text) return;
+    const createdAt = new Date().toLocaleString();
+    todos.push({ text, createdAt });
+    todoInput.value = '';
+    renderTodos();
+  });
+
+  exportBtn.addEventListener('click', () => {
+    if (todos.length === 0) {
+      alert('No todos to export!');
+      return;
+    }
+    const csvRows = [];
+    csvRows.push('Todo,Created At');
+    todos.forEach(({ text, createdAt }) => {
+      const escText = `"${text.replace(/"/g, '""')}"`;
+      const escDate = `"${createdAt.replace(/"/g, '""')}"`;
+      csvRows.push(`${escText},${escDate}`);
+    });
+    const csvContent = csvRows.join('\r\n');
+    const encodedUri = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', 'todos.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+
+  exportTxtBtn.addEventListener('click', () => {
+    if (todos.length === 0) {
+      alert('No todos to export!');
+      return;
+    }
+    const lines = todos.map(t => `${t.text} — ${t.createdAt}`);
+    const txtContent = lines.join('\n');
+    const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'todos.txt';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  });
+</script>
+
+</body>
+</html>
